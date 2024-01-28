@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>HTTP Request Example</title>
+</head>
+<body>
+  <h1>HOME PAGE</h1>
+  <p id="response"></p>
+
+  <script>
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'https://my-notes.pages.dev/auth', true);
+    xhr.withCredentials = true; // Include existing cookies for the domain
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          document.getElementById('response').innerText = 'You're Logged in';
+        } else {
+          document.getElementById('response').innerText = 'You're Logged out';
+          window.location.href = 'https://notes.rzx.workers.dev/login'; // Redirect to login page
+        }
+      }
+    };
+    xhr.send();
+  </script>
+</body>
+</html>
