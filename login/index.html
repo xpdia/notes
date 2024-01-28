@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Login Form</title>
+    <link rel="icon" type="image/x-icon" href="https://cdn.oaistatic.com/_next/static/media/favicon-16x16.9b8dbb69.png">
     <script>
         async function loginUser(event) {
             event.preventDefault();
@@ -18,7 +19,6 @@
                 });
                 if (response.ok) {
                     const responseData = await response.text();
-                    console.log(responseData); // Response with the set cookie token
                 } else {
                     console.error('Login failed:', response.status);
                 }
@@ -26,6 +26,22 @@
                 console.error('Error:', error);
             }
         }
+
+        async function sendAuthRequest() {
+            try {
+                const authResponse = await fetch('https://notes.rzx.workers.dev/auth', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                if (authResponse.ok) {
+                    window.location.href = 'https://my-notes.pages.dev/';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        
+        window.onload = sendAuthRequest;
     </script>
 </head>
 <body>
