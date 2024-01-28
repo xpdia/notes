@@ -14,9 +14,9 @@
     xhr.onreadystatechange = function() {
       if (xhr.readyState === 4) {
         if (xhr.status === 200) {
-          document.getElementById('response').innerText = 'You're Logged in';
+          document.getElementById('response').innerText = 'Youre Logged in';
         } else {
-          document.getElementById('response').innerText = 'You're Logged out';
+          document.getElementById('response').innerText = 'Youre Logged out';
           window.location.href = 'https://notes.rzx.workers.dev/login'; // Redirect to login page
         }
       }
