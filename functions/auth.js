@@ -1,8 +1,4 @@
-addEventListener('fetch', event => {
-  event.respondWith(handleRequest(event.request))
-})
-
-async function handleRequest(request) {
+export function onRequest(request) {
   // Check if the "token" cookie exists
   const token = getCookie(request, 'token')
 
