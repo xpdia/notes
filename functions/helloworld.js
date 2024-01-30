@@ -1,66 +1,46 @@
 addEventListener('fetch', event => {
-	event.respondWith(handleRequest(event.request));
-  });
-  
-  async function handleRequest(request) {
-    const cookieHeader = request.headers.get('Cookie');
+  event.respondWith(handleRequest(event.request));
+});
 
-    if (cookieHeader && cookieHeader.includes('token=')) {
-        const tokenCookie = extractCookieValue(cookieHeader, 'token');
+async function handleRequest(request) {
+  // Get the value to be added to the KV store
+  const dataToAdd = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDY0Mzg3Mjl9.PjoivWqq+/pbGRdgYoSc0ihv08+kHl/9V+ztBQE5Lwk="; // Replace with your actual data to be added
 
-        try {
-            const jwtKey = "UNdfDGCc10ItG8WasIPmQLjdAY30tP88RT6/viWpKg7UnwbG4/lQ2MvVMvFd6MzvPzgrznIwPi5Jr/QhC/8K9Q==";
-            const isTokenValid = await verifyToken(tokenCookie, jwtKey);
+  const date = new Date();
+  const monthYearKey = `${date.toLocaleString('en-US', { month: 'short', year: 'numeric' })}`;
 
-            if (isTokenValid) {
-                return new Response('{"success": true}', {
-                    headers: { 'Content-Type': 'application/json' },
-                });
-            }
-        } catch (error) {
-            console.error('Error verifying token:', error);
-        }
+  try {
+    // Check if the month-year key exists in KV store
+    let existingData = await myKV.get(monthYearKey);
+    const timestamp = Date.now();
+
+    if (existingData) {
+      // If the data for the month already exists, update it with the new value using the timestamp as the key
+      let decodedData = atob(existingData); // Decode the existing data
+      let newData = JSON.parse(decodedData);
+      newData[timestamp] = dataToAdd;
+      let encodedData = btoa(JSON.stringify(newData)); // Encode the updated data
+      // Update the KV with the updated data
+      await myKV.put(monthYearKey, encodedData);
+    } else {
+      // If the month-year key doesn't exist, create a new entry for it using the timestamp as the key
+      const timestamp = Date.now();
+      let newData = { [timestamp]: dataToAdd };
+      let encodedData = btoa(JSON.stringify(newData)); // Encode the new data
+      // Add the new data to the KV store
+      await myKV.put(monthYearKey, encodedData);
     }
 
-    return new Response('{"success": false}', {
-        headers: { 'Content-Type': 'application/json' },
+    // Respond with a success message
+    return new Response(`Data added/updated in KEY: ${timestamp} for month ${monthYearKey}`, {
+      status: 200,
+      headers: { 'Content-Type': 'text/plain' },
     });
+  } catch (error) {
+    // Handle errors, e.g., if there's an issue adding data to the KV store
+    return new Response(`Error adding/updating data to KV store: ${error.message}`, {
+      status: 500,
+      headers: { 'Content-Type': 'text/plain' },
+    });
+  }
 }
-
-function extractCookieValue(cookieHeader, cookieName) {
-    const cookies = cookieHeader.split(';');
-    for (const cookie of cookies) {
-        const [name, value] = cookie.trim().split('=');
-        if (name === cookieName) {
-            return value;
-        }
-    }
-    return null;
-}
-async function verifyToken(token, jwtKey) {
-    const [encodedHeader, encodedPayload, signatureBase64] = token.split('.');
-
-    const key = await crypto.subtle.importKey(
-        "raw",
-        new TextEncoder().encode(jwtKey),
-        { name: "HMAC", hash: "SHA-256" },
-        false,
-        ["verify"]
-    );
-
-    const data = new TextEncoder().encode(encodedHeader + "." + encodedPayload);
-    const signature = new Uint8Array(atob(signatureBase64).split('').map(c => c.charCodeAt(0)));
-
-    const isValid = await crypto.subtle.verify("HMAC", key, signature, data);
-
-    if (!isValid) {
-        return false;
-    }
-
-    const payload = JSON.parse(atob(encodedPayload));
-
-    const currentTime = Math.floor(Date.now() / 1000);
-    return payload.exp > currentTime;
-}
-
-  
